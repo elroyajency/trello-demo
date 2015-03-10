@@ -152,7 +152,9 @@ exports.update =function(req,res,next){
 			if (!docs) {
 				return workflow.emit('exception','List does not exist');
 			};
+			req.app.socket.emit('listEvents',{message: "list name changed from "+docs.name+" to "+req.body.name })
 			_.extend(docs,req.body)
+
 			res.send(docs);
 		})
 	});

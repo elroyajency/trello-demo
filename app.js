@@ -96,6 +96,8 @@ app.utilities.workflow = require('./utils/workflow');
 
 var io = require('socket.io')(app.server);
 io.on('connection', function(socket){
+  app.socket = socket
+  socket.emit('welcome', { message: 'Welcome!' })
   socket.on('event', function(data){});
   socket.on('disconnect', function(){});
 });

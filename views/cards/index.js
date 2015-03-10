@@ -32,6 +32,7 @@ exports.create = function (req,res,next) {
 		index: 0,
 		created_on : new Date()
 	}
+	var listName = ''
 
 	workflow.on('validate',function(){
 		req.app.db.lists.findOne({_id: data.listID},function(err,list){
@@ -39,6 +40,7 @@ exports.create = function (req,res,next) {
 				return workflow.emit('exception',err);
 			if(!list)
 				return workflow.emit('exception','The list Does not exist')
+			listName = list.name
 			return workflow.emit('getIndex');
 		})
 	})
@@ -59,6 +61,7 @@ exports.create = function (req,res,next) {
 			if(err)
 				return workflow.emit('exception',err);
 			delete card.created_on;
+			req.app.socket.emit('listEvents',{message: "card named "+card.name+" added to "+listName })
 			res.send(card);
 		})
 	})
@@ -123,13 +126,17 @@ exports.delete = function(req,res,next){
 	var workflow = req.app.utilities.workflow(req,res)
 
 	var id = req.params.id
+	var cardName = '',
+		listID = '';
 
 	workflow.on('validate',function(){
-		req.app.db.cards.findOne({_id:mongojs.ObjectId(id)},{index:1,listID:1},function(err,card){
+		req.app.db.cards.findOne({_id:mongojs.ObjectId(id)},{name: 1,index:1,listID:1},function(err,card){
 			if(err)
 				return workflow.emit('exception',err);
 			if(!card)
 				return workflow.emit('exception','Card does not exist');
+			cardName = card.name
+			listID =card.listID
 			return workflow.emit('shiftDown',card.index,card.listID)
 		})
 	})
@@ -150,7 +157,12 @@ exports.delete = function(req,res,next){
 		req.app.db.cards.remove({_id:mongojs.ObjectId(id)},function(err,card){
 			if(err)
 				return workflow.emit('exception',err);
-			return workflow.emit('response');
+			req.app.db.lists.findOne({_id:mongojs.ObjectId(listID)},function(err,list){
+				req.app.socket.emit('listEvents',{message: "card named "+cardName+" deleted from "+list.name })
+
+				return workflow.emit('response');
+			})
+			
 		})
 	})
 
@@ -243,14 +255,17 @@ exports.move = function(req,res,next){
 		listID : mongojs.ObjectId(req.body.list),
 		index : 0
 	}
+	var cardName = '',
+		oldListID = '';
 
 	workflow.on('validate',function(){
-		req.app.db.cards.findOne({_id:mongojs.ObjectId(id)},{index:1,listID:1},function(err,card){
+		req.app.db.cards.findOne({_id:mongojs.ObjectId(id)},{name: 1,index:1,listID:1},function(err,card){
 			if(err)
 				return workflow.emit('exception',err);
 			if(!card)
 				return workflow.emit('exception','The card does not exist');
-
+			cardName = card.name
+			oldListID = card.listID
 			return workflow.emit('shiftDown',card.index,card.listID)
 		})
 	})
@@ -281,7 +296,14 @@ exports.move = function(req,res,next){
 		req.app.db.cards.update({_id:mongojs.ObjectId(id)},{$set:data},function(err,card){
 			if(err)
 				return workflow.emit('exception',err);
-			return workflow.emit('response');
+			req.app.db.lists.findOne({_id:oldListID},function(err,oldList){
+				req.app.db.lists.findOne({_id:data.listID},function(err,newList){
+					req.app.socket.emit('listEvents',{message: "card named "+cardName+" moved from "+oldList.name+" to "+ newList.name })
+
+					return workflow.emit('response');
+				})
+			})
+			
 		})
 	})
 
