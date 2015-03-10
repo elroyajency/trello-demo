@@ -18,14 +18,9 @@ app.config = config;
 app.server = http.createServer(app);
 
 // setup mongojs
-app.db = mongojs('raw',['lists','cards','board']);
+app.db = mongojs('raw',['lists','cards']);
 
-//setup mongoose
-// app.db = mongoose.createConnection(config.mongodb.uri);
-// app.db.on('error', console.error.bind(console, 'mongoose connection error: '));
-// app.db.once('open', function () {
-//   //and... we have a data store
-// });
+
 
 //settings
 // app.disable('x-powered-by');
@@ -56,43 +51,6 @@ app.use(require('./views/http/index').http500);
 app.utilities = {};
 app.utilities.workflow = require('./utils/workflow');
 
-
-
-
-
-
-
-
-// // catch 404 and forward to error handler
-// app.use(function(req, res, next) {
-//   var err = new Error('Not Found');
-//   err.status = 404;
-//   next(err);
-// });
-
-// // error handlers
-
-// // development error handler
-// // will print stacktrace
-// if (app.get('env') === 'development') {
-//   app.use(function(err, req, res, next) {
-//     res.status(err.status || 500);
-//     res.render('error', {
-//       message: err.message,
-//       error: err
-//     });
-//   });
-// }
-
-// // production error handler
-// // no stacktraces leaked to user
-// app.use(function(err, req, res, next) {
-//   res.status(err.status || 500);
-//   res.render('error', {
-//     message: err.message,
-//     error: {}
-//   });
-// });
 
 var io = require('socket.io')(app.server);
 io.on('connection', function(socket){

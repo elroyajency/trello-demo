@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = function (app) {
-	app.get('/',require('./views/index').init );
+	
 
 
 	// list routes
